@@ -2,10 +2,9 @@ import dataretrieval.nwis as nwis
 import pandas as pd
 from tqdm import tqdm
 
-rec_sites_file = open('recordingsitesv2.tsv')
+rec_sites_file = open('input_data/recordingsites.tsv')
 lines = rec_sites_file.readlines()
 all_sites = [line.split('\t')[0] for line in lines[1:]]
-'03339000' in all_sites
 rec_sites_file.close()
 
 
@@ -31,8 +30,8 @@ for site in tqdm(all_sites, 'Collecting river depth data for each site'):
         temp_depth_only.index = temp_depth_only.index.tz_localize(None)
         # https://realpython.com/pandas-merge-join-and-concat/#pandas-join-combining-data-on-a-column-or-index
         river_depth_df = river_depth_df.join(temp_depth_only)
-river_depth_df.to_csv('river_depth_data.csv')
+river_depth_df.to_csv('ingested_data/river_depth_data.csv')
 
 # %%
-sites_info_df = pd.read_csv('recordingsitesv2.tsv', sep='\t')
+sites_info_df = pd.read_csv('input_data/recordingsites.tsv', sep='\t')
 sites_info_df['site_no'] = all_sites

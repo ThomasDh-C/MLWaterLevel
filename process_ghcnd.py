@@ -6,7 +6,7 @@ import pandas as pd
 
 # AIM: find precip and temp data for all the river height monitoring stations
 # https://www.ncei.noaa.gov/products/land-based-station/global-historical-climatology-network-daily
-precip_temp_sites = open('ghcnd-inventory.txt')
+precip_temp_sites = open('input_data/ghcnd-inventory.txt')
 lines = precip_temp_sites.readlines()
 precip_temp_sites.close()
 
@@ -49,8 +49,8 @@ good_river_sites = [river for good, river in zip(
     good_rivers_bool, list(river_depth_df)) if good]
 # filter all recording sites to get only good river sites
 # 1. get all sites + fix
-df_raw_river_sites = pd.read_csv('recordingsitesv2.tsv', sep='\t')
-rec_sites_file = open('recordingsitesv2.tsv')
+df_raw_river_sites = pd.read_csv('input_data/recordingsites.tsv', sep='\t')
+rec_sites_file = open('input_data/recordingsites.tsv')
 lines = rec_sites_file.readlines()
 df_raw_river_sites['site_no'] = [line.split('\t')[0] for line in lines[1:]]
 rec_sites_file.close()
@@ -121,7 +121,7 @@ for row in tqdm(df_river_sites[['station', 'closest_pt_site']].values, 'Reading 
 
 # %%
 # --- Export for future files to use
-df_river_sites.to_csv('river_to_tp_map.csv')
-precip_df.to_csv('precip_data.csv')
-temp_df.to_csv('temp_data.csv')
+df_river_sites.to_csv('ingested_data/river_to_tp_map.csv')
+precip_df.to_csv('ingested_data/precip_data.csv')
+temp_df.to_csv('ingested_data/temp_data.csv')
 # %%

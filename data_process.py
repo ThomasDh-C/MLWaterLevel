@@ -5,7 +5,7 @@ import pandas as pd
 
 # 3569 rivers
 # 3654 datapoints max per river
-river_depth_df = pd.read_csv('river_depth_data.csv', index_col=0)
+river_depth_df = pd.read_csv('input_data/river_depth_data.csv', index_col=0)
 # %%
 non_nas = river_depth_df.count()
 plt.hist(non_nas, bins=50)
@@ -24,8 +24,8 @@ good_river_sites = [river for good, river in zip(
 
 # filter all recording sites to get only good river sites
 # 1. get all sites + fix
-df_raw_river_sites = pd.read_csv('recordingsitesv2.tsv', sep='\t')
-rec_sites_file = open('recordingsitesv2.tsv')
+df_raw_river_sites = pd.read_csv('input_data/recordingsites.tsv', sep='\t')
+rec_sites_file = open('input_data/recordingsites.tsv')
 lines = rec_sites_file.readlines()
 df_raw_river_sites['site_no'] = [line.split('\t')[0] for line in lines[1:]]
 rec_sites_file.close()
