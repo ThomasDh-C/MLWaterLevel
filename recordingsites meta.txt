@@ -1,0 +1,29 @@
+# https://waterdata.usgs.gov/nwis/inventory?search_criteria=data_type&submitted_form=introduction
+# county code translate https://help.waterdata.usgs.gov/code/county_query?fmt=html
+# huc codes https://water.usgs.gov/GIS/huc_name.html
+# US Geological Survey
+# retrieved: 2022-09-19 15:29:45 EDT
+# URL: https://nwis.waterdata.usgs.gov/nwis/inventory
+#
+# The Site File stores location and general information about groundwater,
+# surface water, and meteorological sites
+# for sites in USA.
+#
+# The following selected fields are included in this output:
+#
+#  site_no         -- Site identification number
+#  station_nm      -- Site name
+#  dec_lat_va      -- Decimal latitude
+#  dec_long_va     -- Decimal longitude
+#  coord_acy_cd    -- Latitude-longitude accuracy
+#  dec_coord_datum_cd -- Decimal Latitude-longitude datum
+#  district_cd     -- District code
+#  state_cd        -- State code
+#  county_cd       -- County code
+#  huc_cd          -- Hydrologic unit code
+#  basin_cd        -- Drainage basin code
+#
+#
+# query started 2022-09-19 15:29:45 EDT
+#
+# there are 13058 sites matching the search criteria.
