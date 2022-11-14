@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 import matplotlib.pyplot as plt
+from tqdm import tqdm
+from tqdm.contrib.concurrent import process_map
 
 max_days = 3654
 
@@ -77,3 +79,98 @@ def find_sparse_nas(input_df):
     na_df['abs_val_change'] = np.absolute(na_df['val_change'])
 
     return na_df
+
+
+def parse_data_dfs():
+    # -- River height --
+    river_depth_df = load_df('ingested_data/river_depth_data.csv')
+    river_depth_df = river_depth_df.interpolate(method='linear').interpolate(
+        method='linear', limit_direction='backward')
+
+    # -- Precipitation --
+    precip_df = load_df('ingested_data/precip_data.csv')
+    precip_df2 = load_df('ingested_data/precip_data2.csv')
+
+    # if na can only make better by looking at next nearest df
+    for riv in list(precip_df):
+        hashmap_for_orig = precip_df[riv].isna()
+        precip_df.loc[hashmap_for_orig,
+                      riv] = precip_df2.loc[hashmap_for_orig, riv]
+    precip_df = precip_df.interpolate(method='linear').interpolate(
+        method='linear', limit_direction='backward')
+
+    # -- Temperature --
+    temp_df = load_df('ingested_data/temp_data.csv')
+    temp_df2 = load_df('ingested_data/temp_data2.csv')
+
+    # if na can only make better by looking at next nearest df
+    for riv in list(temp_df):
+        hashmap_for_orig = temp_df[riv].isna()
+        temp_df.loc[hashmap_for_orig,
+                    riv] = temp_df2.loc[hashmap_for_orig, riv]
+    temp_df = temp_df.interpolate(method='linear').interpolate(
+        method='linear', limit_direction='backward')
+
+    imperfect_final_rivs = []  # for train and validate
+    with open('eda_results/imperfect_final_rivs.txt', 'r') as in_file:
+        imperfect_final_rivs = in_file.readline()[:-1].split(', ')
+    perfect_final_rivs = []  # for final test
+    with open('eda_results/perfect_final_rivs.txt', 'r') as in_file:
+        perfect_final_rivs = in_file.readline()[:-1].split(', ')
+
+    # df name shortening:
+    # letter 1 = d (river depth), p (precipitation), t (temperature)
+    # letter 2 = i (imperfect), p (perfect)
+    di_df = river_depth_df.loc[:, imperfect_final_rivs]
+    pi_df = precip_df.loc[:, imperfect_final_rivs]
+    ti_df = temp_df.loc[:, imperfect_final_rivs]
+    dp_df = river_depth_df.loc[:, perfect_final_rivs]
+    pp_df = precip_df.loc[:, perfect_final_rivs]
+    tp_df = temp_df.loc[:, perfect_final_rivs]
+    return di_df, pi_df, ti_df, dp_df, pp_df, tp_df
+
+
+def make_timeseries(all_rivs, train_rivs, validate_rivs, slide_window_riv, data_days):
+    slide_train_arr = []    # train features
+    slide_val_arr = []      # validate features
+    slide_test_arr = []      # test features
+
+    # https://stackoverflow.com/questions/37804279/how-can-we-use-tqdm-in-a-parallel-execution-with-joblib
+    all_slide_window_data = process_map(slide_window_riv, all_rivs,
+                                        max_workers=16, chunksize=10)
+
+    for all_features in tqdm(all_slide_window_data, 'Reassigning river data to correct frame'):
+        for features in all_features:
+            riv = features[1]
+            if riv in train_rivs:
+                slide_train_arr.append(features)
+            elif riv in validate_rivs:
+                slide_val_arr.append(features)
+            else:
+                slide_test_arr.append(features)
+
+    # create dfs and sort because all out of order!
+    slide_cols = ['y', 'river', 'river_day']
+    for idx in range(data_days):
+        slide_cols.append(f'd{idx}')
+    for idx in range(data_days):
+        slide_cols.append(f'p{idx}')
+    for idx in range(data_days):
+        slide_cols.append(f't{idx}')
+
+    X_train_df = pd.DataFrame(slide_train_arr, columns=slide_cols)
+    print('Training data made')
+    X_train_df.sort_values(by=['river', 'river_day'], inplace=True)
+    print('Training data sorted')
+
+    X_val_df = pd.DataFrame(slide_val_arr, columns=slide_cols)
+    print('Validation data made')
+    X_val_df.sort_values(by=['river', 'river_day'], inplace=True)
+    print('Validation data sorted')
+
+    X_test_df = pd.DataFrame(slide_test_arr, columns=slide_cols)
+    print('Test data made')
+    X_test_df.sort_values(by=['river', 'river_day'], inplace=True)
+    print('Test data sorted')
+
+    return X_train_df, X_val_df, X_test_df
