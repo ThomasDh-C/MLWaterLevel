@@ -1,4 +1,5 @@
 # %%
+from statsmodels.tsa.arima.model import ARIMA
 import umap
 from sklearn.decomposition import PCA
 from matplotlib.cm import get_cmap
@@ -80,10 +81,107 @@ mean_std_d_df = (dtrain_df - dtrain_df.mean()) / dtrain_df.std()
 # %%
 # Check frequencies in data
 # not clear there is pattern any apart from yearly
+plot_data = False
+# if plot_data:
 # fft_river_df(dtrain_df, 'depth')
 # fft_river_df(pi_df.loc[:, train_rivs], 'precipitation')
 # fft_river_df(ti_df.loc[:, train_rivs], 'temperature')
+# %%
+# Autocorrelation functions and data processing
+print('--- Autocorrelation functions and data processing ---')
+ptrain_df = pi_df.loc[:, train_rivs]
+ttrain_df = ti_df.loc[:, train_rivs]
 
+
+def d_autocorr_mean(row):
+    return dtrain_df.apply(lambda col: col.autocorr(row), axis=0).to_numpy().mean()
+
+
+def p_autocorr_mean(row):
+    return ptrain_df.apply(lambda col: col.autocorr(row), axis=0).to_numpy().mean()
+
+
+def t_autocorr_mean(row):
+    return ttrain_df.apply(lambda col: col.autocorr(row), axis=0).to_numpy().mean()
+
+
+d_autocorrs, p_autocorrs, t_autocorrs = None, None, None
+if plot_data:
+    print('Depth')
+    d_autocorrs = process_map(d_autocorr_mean, range(
+        dtrain_df.shape[0]-2), max_workers=16, chunksize=5)
+    print('Precipitation')
+    p_autocorrs = process_map(p_autocorr_mean, range(
+        ptrain_df.shape[0]-2), max_workers=16, chunksize=5)
+    print('Temperature')
+    t_autocorrs = process_map(t_autocorr_mean, range(
+        ttrain_df.shape[0]-2), max_workers=16, chunksize=5)
+# %%
+# Autocorrelation graphs
+if plot_data:
+    # DEPTH
+    # 1 river
+    print('--- Autcorrelation graphs ---')
+    print('Depth')
+    pd.plotting.autocorrelation_plot(dtrain_df.iloc[:, 0])
+    plt.title(
+        f"River {list(dtrain_df)[0]}'s (index 0) depth autocorrelation plot")
+    plt.show()
+    print(f"Each river is unique so find mean of all rivers from now on")
+
+    # All rivers
+    plt.plot(d_autocorrs)
+    plt.ylabel('Autocorrelation')
+    plt.xlabel('Lag (days)')
+    plt.title('Mean river depth autocorrelation plot')
+    plt.show()
+
+    # Zoomed in all rivers
+    plt.plot(d_autocorrs[:401])
+    plt.ylabel('Autocorrelation')
+    plt.xlabel('Lag (days)')
+    plt.title('Zoomed mean river depth autocorrelation plot')
+    plt.show()
+
+    # PRECIPITATION
+    print('Precipitation')
+    # All rivers
+    plt.plot(p_autocorrs)
+    plt.ylabel('Autocorrelation')
+    plt.xlabel('Lag (days)')
+    plt.title('Mean river precipitation autocorrelation plot')
+    plt.show()
+
+    # Zoomed in all rivers
+    plt.plot(p_autocorrs[:11])
+    plt.ylabel('Autocorrelation')
+    plt.xlabel('Lag (days)')
+    plt.title('Zoomed mean river precipitation autocorrelation plot')
+    plt.show()
+
+    # TEMPERATURE
+    # All rivers
+    print('Temperature')
+    plt.plot(t_autocorrs)
+    plt.ylabel('Autocorrelation')
+    plt.xlabel('Lag (days)')
+    plt.title('Mean river temperature autocorrelation plot')
+    plt.show()
+
+    # Zoomed in all rivers
+    plt.plot(t_autocorrs[:401])
+    plt.ylabel('Autocorrelation')
+    plt.xlabel('Lag (days)')
+    plt.title('Zoomed mean river temperature autocorrelation plot')
+    plt.show()
+
+# %%
+# ARIMA models:
+# based on https://machinelearningmastery.com/arima-for-time-series-forecasting-with-python/
+
+series = dtrain_df.to_numpy().reshape(-1)
+model = ARIMA(endog=series, order=(5, 1, 0))
+model_fit = model.fit()
 # %%
 # Make training, validate, testing matrices for df in next step
 slide_train_arr = []    # train features
@@ -226,12 +324,12 @@ plt.title('True - predicted')
 plt.colorbar()
 plt.show()
 # %%
-rows = 10000  # of 2million
-umap_reducer = umap.UMAP(n_neighbors=100, n_epochs=200)
+rows = 100000  # of 2million
+umap_reducer = umap.UMAP(n_neighbors=80, n_epochs=250, n_jobs=-1)
 X_train_emb_umap = umap_reducer.fit_transform(X_train_df.iloc[:rows, 3:28])
 
-plt.scatter(X_train_emb[:, 0], X_train_emb[:, 1], s=3,
-            c=X_train_df['y']-train_pred_pca[:rows])
+plt.scatter(X_train_emb_umap[:, 0][:rows], X_train_emb_umap[:, 1][:rows], s=3,
+            c=X_train_df['y'][:rows]-train_pred_pca[:rows])
 plt.title('True - predicted')
 plt.colorbar()
 plt.show()
