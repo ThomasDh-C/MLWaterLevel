@@ -4,6 +4,8 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from tqdm.contrib.concurrent import process_map
+import gc
+from concurrent.futures import ProcessPoolExecutor
 
 max_days = 3654
 
@@ -136,9 +138,16 @@ def make_timeseries(all_rivs, train_rivs, validate_rivs, slide_window_riv, data_
     slide_test_arr = []      # test features
 
     # https://stackoverflow.com/questions/37804279/how-can-we-use-tqdm-in-a-parallel-execution-with-joblib
-    all_slide_window_data = process_map(slide_window_riv, all_rivs,
-                                        max_workers=16, chunksize=10)
-
+#     all_slide_window_data = process_map(slide_window_riv, all_rivs,
+#                                         max_workers=20, chunksize=5)
+    # https://github.com/tqdm/tqdm/blob/master/tqdm/contrib/concurrent.py
+    # https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
+    executor = ProcessPoolExecutor(max_workers=16) #, max_tasks_per_child=100
+    # https://tqdm.github.io/docs/tqdm/#__init__
+    all_slide_window_data = list(tqdm(executor.map(slide_window_riv, all_rivs, chunksize=8), total=len(all_rivs), desc="Multiprocess all sliding windows"))
+    executor.shutdown()
+    _ = gc.collect()
+    
     for all_features in tqdm(all_slide_window_data, 'Reassigning river data to correct frame'):
         for features in all_features:
             riv = features[1]
@@ -148,7 +157,7 @@ def make_timeseries(all_rivs, train_rivs, validate_rivs, slide_window_riv, data_
                 slide_val_arr.append(features)
             else:
                 slide_test_arr.append(features)
-
+    
     # create dfs and sort because all out of order!
     slide_cols = ['y', 'river', 'river_day']
     for idx in range(data_days):
