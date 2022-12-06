@@ -102,12 +102,22 @@ df_river_sites['closest_pt_site2'] = [
 df_river_sites['dist_to_pt_site2'] = earth_distances[:, 1]
 
 # %%
-
-plt.hist(df_river_sites['dist_to_pt_site'], bins=20)
+max1, max2 = max(df_river_sites['dist_to_pt_site']), max(
+    df_river_sites['dist_to_pt_site2'])
+binwidth = 5
+bins_custom = bins = [idx for idx in range(
+    0, int(max(max1, max2)//binwidth+1)*binwidth+1, binwidth)]
+plt.hist(df_river_sites['dist_to_pt_site'],
+         bins=bins_custom, alpha=0.5, label="First closest site")
+plt.hist(df_river_sites['dist_to_pt_site2'],
+         bins=bins_custom, alpha=0.5, label="Second closest site")
 plt.title(
-    'Histogram of distances from river station to precipitation & temperature station')
-plt.xlabel('Distance (miles)')
+    'Histogram of distances from NWIS site to GHCN site ')
+plt.xlabel(
+    'Distance from river station to precipitation & temperature station (miles)')
 plt.ylabel('Number of stations')
+plt.legend()
+plt.savefig('./presentation docs/nwis_to_ghcn_distance', dpi=200)
 plt.show()
 # %%
 # --- Query NOAA for the daily values for those PT sites

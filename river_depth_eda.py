@@ -173,3 +173,5 @@ perfect_rivs = list(good_river_depth.loc[:, perfect_rivs_filter])
 
 with open('eda_results/perfect_depth_rivs.txt', 'w') as out:
     print(', '.join(perfect_rivs), file=out)
+
+# %%
