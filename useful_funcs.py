@@ -42,6 +42,7 @@ def fft_river_df(df, var):
     plt.xlabel('Frequency (log scale)')
     plt.title(f'FFT of river {var}')
     plt.legend()
+    plt.savefig(f'./presentation docs/fft_{var}.png', dpi=200)
     plt.show()
 
 
