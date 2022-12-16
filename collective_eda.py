@@ -27,10 +27,10 @@ final_rivs = set(great_depth_rivs) & set(
 perfect_final_rivs = set(final_rivs) & set(perfect_depth_rivs)
 imperfect_final_rivs = final_rivs - perfect_final_rivs
 
-# with open('eda_results/perfect_final_rivs.txt', 'w') as out:
-#     print(', '.join(perfect_final_rivs), file=out)
-# with open('eda_results/imperfect_final_rivs.txt', 'w') as out:
-#     print(', '.join(imperfect_final_rivs), file=out)
+with open('eda_results/perfect_final_rivs.txt', 'w') as out:
+    print(', '.join(perfect_final_rivs), file=out)
+with open('eda_results/imperfect_final_rivs.txt', 'w') as out:
+    print(', '.join(imperfect_final_rivs), file=out)
 
 train_rivs, validate_rivs = train_test_split(
     list(imperfect_final_rivs), test_size=0.33, random_state=42)

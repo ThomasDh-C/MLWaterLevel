@@ -31,7 +31,3 @@ for site in tqdm(all_sites, 'Collecting river depth data for each site'):
         # https://realpython.com/pandas-merge-join-and-concat/#pandas-join-combining-data-on-a-column-or-index
         river_depth_df = river_depth_df.join(temp_depth_only)
 river_depth_df.to_csv('ingested_data/river_depth_data.csv')
-
-# %%
-sites_info_df = pd.read_csv('input_data/recordingsites.tsv', sep='\t')
-sites_info_df['site_no'] = all_sites
